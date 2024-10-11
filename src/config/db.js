@@ -1,19 +1,23 @@
 const mysql = require('mysql2');
+const Sequelize = require('sequelize');
 require('dotenv').config();
 
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-});
 
-connection.connect((err) => {
-  if (err) {
-    console.error('Erro ao tentar conectar-se com o database: ', err);
-    return;
-  }
+const connection = new Sequelize(process.env.DB_NAME, 
+                                  'root', 
+                                  process.env.DB_PASSWORD, 
+                                  {
+                                    host: 'localhost',
+                                    dialect: 'mysql'
+                                  }
+                                );
 
-  console.log('Conexão realizada com sucesso!');
-});
+connection.authenticate()
+          .then(() => {
+            console.log('Conexão realizada com sucesso!');
+          })
+          .catch((err) => {
+            console.error('Erro ao tentar conectar-se com o database: ', err);
+          });
+
 module.exports = connection;

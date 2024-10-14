@@ -1,24 +1,85 @@
-const { where } = require("sequelize");
+const {  DataTypes } = require("sequelize");
 const db = require("../config/db");
 
-//Table
-exports.createNewTable = async (tableName, fields ) => {
+
+
+//Posts Table
+const createPostsTable = async (Users) => {
 
     try{
-        const Users = await db.define(tableName,        
-            fields, 
+        const Posts = await db.define("posts",        
+            {
+                id: {
+                  type: DataTypes.INTEGER,
+                  autoIncrement: true,
+                  primaryKey: true
+                },
+                title: {
+                  type: DataTypes.STRING
+                },
+                text: {
+                  type: DataTypes.STRING
+                },
+              }, 
             {
                 freezeTableName: true,
             },
         );
 
-        Users.sync({alter: true});
+        Posts.belongsTo(Users, {
+            foreignKey: {
+                name: "userId",
+                allowNull: false
+            },
+            onDelete: "CASCADE",
+        });
+
+        Users.hasMany(Posts, {
+            foreignKey: "userId"
+        });
+
+        // Users.sync({alter: true});
+        db.sync({alter: true});
     }catch(err){
         console.log(err);
     }
 
 }
 
+//Users Table
+exports.createUsersTable = async () => {
+
+    try{
+        const Users = await db.define("users",        
+            {
+                id: {
+                  type: DataTypes.INTEGER,
+                  autoIncrement: true,
+                  primaryKey: true
+                },
+                name: {
+                  type: DataTypes.STRING
+                },
+                email: {
+                  type: DataTypes.STRING
+                },
+                password: {
+                  type: DataTypes.STRING
+                }
+              }, 
+            {
+                freezeTableName: true
+            },
+        );
+
+        Users.sync({alter: true});
+
+        await createPostsTable(Users);
+    }catch(err){
+        console.log(err);
+    }
+
+}
 
 //Users
 exports.createUser = async (userData) => {
@@ -108,4 +169,55 @@ exports.getUsers = async () => {
     }
 }
 
+// Posts
+exports.createPost = async (postData) => {
+    const Posts = await db.models.posts;
 
+    if(!Posts){
+        throw new Error("Tabela posts não existe.");
+    }
+
+    try{
+        const newPost = await Posts.create(postData);
+
+        return newPost;
+    }catch(err){
+        console.log(err);
+    }
+}
+
+exports.deletePost = async (postId) => {
+    const Posts = await db.models.posts;
+
+    if(!Posts){
+        throw new Error("Tabela posts não existe.");
+    }
+
+    try{
+        const result = await Posts.destroy({
+            where: {
+                id: postId
+            }
+        });
+
+        return result;
+    }catch(err){
+        console.log(err);
+    }
+}
+
+exports.getPosts = async () => {
+    const Posts = await db.models.posts;
+    
+    if(!Posts){
+        throw new Error("Tabela posts não existe.");
+    }
+
+    try{
+        const posts = await Posts.findAll();
+
+        return posts;
+    }catch(err){
+        console(err);
+    }
+}
